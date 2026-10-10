@@ -54,6 +54,11 @@ vega_b_band = vega_info[b_mask]
 v_mask = (vega_info['wavelength'] >= v_band_range[0]) & (vega_info['wavelength'] <= v_band_range[1])
 vega_v_band = vega_info[v_mask]
 
+vega_bands = { 
+    "U": vega_u_band,
+    "B": vega_b_band,
+    "V": vega_v_band
+}
 
 class spectra:
     def __init__(self, filename, star_type):
@@ -74,3 +79,25 @@ spectras_computed = []
 for csv in spectra_list:
     s = spectra(csv[0], csv[1])
     spectras_computed.append(s)
+ # Determinining C constant for each band
+'''
+Using formula:
+M_x = -2.5 log ( ∫ F_λ λ  S_x(λ) dλ / ∫ F_λ^0 S_x(λ) dλ ) + C_x
+Given the problem at hand we can assume that S_x(λ) = 1 for all relevant wavelenghts in bound.
+For vega it is known that M_x = 0  for all bands, thusly:
+C_x = 2.5 log ( ∫ F_λ(λ) λ  dλ / λ dλ )
+'''
+
+def compute_C( vega_band):
+    numerator = np.trapezoid(vega_band['flux']*vega_band['wavelength'], vega_band['wavelength'])
+    denominator = np.trapezoid(vega_band['wavelength'], vega_band['wavelength'])
+
+    C = 2.5 * np.log10(numerator / denominator)
+    return C
+
+C_x = {}
+for C in ["U", "B", "V"]:
+    vega_band = vega_bands[C]
+    C_x[C] = compute_C(vega_band)
+    print(f"The C constant for {C} band is: {C_x[C]:.4f}")
+
