@@ -65,15 +65,17 @@ class spectra:
         self.filename = filename
         self.star_type = star_type
         self.data = Table.read(f"{spectra_folder}{filename}", format="ascii.csv")
-        u_band = self.get_band_flux("U")
-        b_band = self.get_band_flux("B")
-        v_band = self.get_band_flux("V")
 
-    def get_band_flux(self, band):
-        range = get_wavelength_range(band)
-        mask  = (self.data['wavelength'] >= range[0]) & (self.data['wavelength'] <= range[1])
+    def compute_magnitude(self, band, C_x):
+        wavelenghts = np.arange(get_wavelength_range(band)[0], get_wavelength_range(band)[1], 100)
+        interpolated_self = interpolate_flux(self.data, wavelenghts)
+        vega_int_band = interpolated_vega[band]
 
-        return  self.data[mask]
+        # Assuming S_x(λ) = 1 for all relevant wavelengths in bound
+        numerator = np.trapezoid(interpolated_self/wavelenghts, wavelenghts)
+        denominator = np.trapezoid(vega_int_band/wavelenghts, wavelenghts)
+
+        return -2.5 * np.log10(numerator / denominator) + C_x
 
 spectras_computed = []
 for csv in spectra_list:
@@ -88,7 +90,7 @@ For vega it is known that M_x = 0  for all bands, thusly:
 C_x = 2.5 log ( ∫ F_λ(λ) λ  dλ / λ dλ )
 '''
 
-def compute_C( vega_band):
+def compute_C(vega_band):
     numerator = np.trapezoid(vega_band['flux']*vega_band['wavelength'], vega_band['wavelength'])
     denominator = np.trapezoid(vega_band['wavelength'], vega_band['wavelength'])
 
@@ -100,4 +102,28 @@ for C in ["U", "B", "V"]:
     vega_band = vega_bands[C]
     C_x[C] = compute_C(vega_band)
     print(f"The C constant for {C} band is: {C_x[C]:.4f}")
+
+
+# Determining magnitudes for each star
+
+# Interpolating arrays to have proper values
+def interpolate_flux(spectra, band_range):
+    return np.interp(band_range, spectra['wavelength'], spectra['flux'])
+
+interpolated_vega = {
+    "U": interpolate_flux(vega_info, np.arange(u_band_range[0], u_band_range[1], 100)),
+    "B": interpolate_flux(vega_info, np.arange(b_band_range[0], b_band_range[1], 100)),
+    "V": interpolate_flux(vega_info, np.arange(v_band_range[0], v_band_range[1], 100))
+}
+
+# Computing magnitudes for each star
+for spectrum in spectras_computed:
+    spectrum.m_u = spectrum.compute_magnitude("U", C_x["U"])
+    spectrum.m_b = spectrum.compute_magnitude("B", C_x["B"])
+    spectrum.m_v = spectrum.compute_magnitude("V", C_x["V"])
+
+    spectrum.m_ub = spectrum.m_u - spectrum.m_b
+    spectrum.m_bv = spectrum.m_b - spectrum.m_v
+
+
 
