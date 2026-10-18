@@ -79,8 +79,8 @@ class spectra:
         vega_int_band = interpolated_vega[band]
 
         # Assuming S_x(λ) = 1 for all relevant wavelengths in bound
-        numerator = np.trapezoid(interpolated_self/wavelenghts, wavelenghts)
-        denominator = np.trapezoid(vega_int_band/wavelenghts, wavelenghts)
+        numerator = np.trapezoid(interpolated_self*wavelenghts, wavelenghts)
+        denominator = np.trapezoid(wavelenghts, wavelenghts)
 
         return -2.5 * np.log10(numerator / denominator) + C_x
 
@@ -159,8 +159,8 @@ class  blackbody:
             self.fluxs[band] = flux
 
             # Assuming S_x(λ) = 1 for all relevant wavelengths in bound
-            numerator = np.trapezoid(flux/wavelenghts, wavelenghts)
-            denominator = np.trapezoid(vega_int_band/wavelenghts, wavelenghts)
+            numerator = np.trapezoid(flux*wavelenghts, wavelenghts)
+            denominator = np.trapezoid(wavelenghts, wavelenghts)
 
             return -2.5 * np.log10(numerator / denominator) + C_x
 
@@ -189,7 +189,13 @@ spectral_colors = {
 
 
 fig, ax = plt.subplots(figsize=(10,6))
-ax.scatter([s.m_bv for s in spectras_computed], [s.m_ub for s in spectras_computed], label="Stars",marker="*", color=[spectral_colors[s.star_type[0]] for s in spectras_computed], s=6)
+for s in spectras_computed:
+    if s.star_type[0:2] == "A0":
+        ax.scatter(s.m_bv, s.m_ub, label=f"{s.star_type} (A0)", marker="s", color="pink", s=6)
+        print(f"Found A0 star: {s.filename} with B-V color: {s.m_bv:.3f} and U-B color: {s.m_ub:.3f}")
+    else:
+        ax.scatter(s.m_bv, s.m_ub, label=f"{s.star_type}", marker="*", color=spectral_colors[s.star_type[0]], s=6)
+# ax.scatter([s.m_bv for s in spectras_computed], [s.m_ub for s in spectras_computed], label="Stars",marker="*", color=[spectral_colors[s.star_type[0]] for s in spectras_computed], s=6)
 ax.plot([bb.m_bv for bb in blackbodies], [bb.m_ub for bb in blackbodies], label="Blackbodies", color="black", linewidth=1)
 ax.set_xlabel("B-V")
 ax.set_ylabel("U-B")
