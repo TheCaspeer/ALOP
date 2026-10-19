@@ -232,6 +232,7 @@ for type in specific_types:
         if spectrum.star_type[0:2] == type:
             specific_stars.append(spectrum)
             find_blackbody_temp_bv(spectrum)
+            print(f"A {spectrum.star_type} star corrosponds to a blackbody temperature of {spectrum.closest_bb.T:.2f} K ")
 
             wavelenghts = np.arange(
                 3000, 9000, interpolation_step
@@ -253,10 +254,16 @@ for type in specific_types:
 fig2, ax2 = plt.subplots(figsize=(10,6))
 
 for star in specific_stars:
-    ax2.plot(star.normalized_wavelengths, star.normalized_flux, label=f"{star.star_type} (normalized)", color=spectral_colors[star.star_type[0]], alpha=0.5)
+    ax2.plot(star.normalized_wavelengths, star.normalized_flux, label=f"{star.star_type} (normalized)", alpha=0.5)
 
+
+
+ax2.axhline(y=1, color='gray', linestyle='--', linewidth=1, label='Black Body')
+ax2.axvline(x=bands["V"][0], color="green", linestyle="--", linewidth=1, label="Reference Wavelength (V-band)")
 ax2.set_xlabel("Wavelength [Å]")
 ax2.set_ylabel("Normalized Flux [F_λ / F_λ,bb]")
+ax2.grid(True, alpha=0.3)
+fig2.legend()
 
 plt.show() 
 
