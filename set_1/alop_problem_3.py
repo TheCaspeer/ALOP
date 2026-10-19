@@ -260,6 +260,7 @@ for type in specific_types:
         if spectrum.star_type[0:2] == type:
             specific_stars.append(spectrum)
             find_blackbody_temp_bv(spectrum)
+            print(f"A {spectrum.star_type} star corrosponds to a blackbody temperature of {spectrum.closest_bb.T:.2f} K ")
 
             wavelenghts = np.arange(
                 3000, 9000, interpolation_step

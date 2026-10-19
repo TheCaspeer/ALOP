@@ -46,6 +46,7 @@ folder = cwd + "/set_1/Data/"
 data_B = fits.getdata(f"{folder}exposure_B_alop_2026_2027.fits")
 data_V = fits.getdata(f"{folder}exposure_V_alop_2026_2027.fits")
 
+
 B_band.data = data_B
 V_band.data = data_V
 
