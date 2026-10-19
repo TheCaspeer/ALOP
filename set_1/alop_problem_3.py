@@ -109,7 +109,7 @@ C_x = {}
 for C in ["U", "B", "V"]:
     vega_band = vega_bands[C]
     C_x[C] = compute_C(vega_band)
-    # print(f"The C constant for {C} band is: {C_x[C]:.4f}")
+
 
 
 # Determining magnitudes for each star
@@ -178,41 +178,69 @@ for body in blackbodies:
     body.m_bv = body.m_b - body.m_v
     
 spectral_colors = {
-    "O": "aqua",
-    "B": "blue",
-    "A": "skyblue",
-    "F": "snow",
-    "G": "yellow",
-    "K": "orange",
-    "M": "red"
-} # not fully as required by assignment,  TODO: FIX
+    "O5": "v",
+    "B0": "^",
+    "A0": "<",
+    "F0": ">",
+    "G0": "p",
+    "K0": "P",
+}
 
 
-fig, ax = plt.subplots(figsize=(10,6))
+fig, ax = plt.subplots(figsize=(14,10))
 for s in spectras_computed:
-    if s.star_type[0:2] == "A0":
-        ax.scatter(s.m_bv, s.m_ub, label=f"{s.star_type} (A0)", marker="s", color="pink", s=6)
-        print(f"Found A0 star: {s.filename} with B-V color: {s.m_bv:.3f} and U-B color: {s.m_ub:.3f}")
+    if s.star_type[0:2] in spectral_colors:
+        plt_marker = spectral_colors[s.star_type[0:2]]
     else:
-        ax.scatter(s.m_bv, s.m_ub, label=f"{s.star_type}", marker="*", color=spectral_colors[s.star_type[0]], s=6)
+        plt_marker = "*"
+
+    if s.star_type[-1] == "V": # Main sequence star
+        plt_color = "Blue"
+    elif s.star_type[-1] == "III": # Giant star
+        plt_color = "Red"
+    else:
+        plt_color = "dimgray" # Other types of stars
+    ax.scatter(s.m_bv, s.m_ub, label=f"{s.star_type}", marker=plt_marker, color=plt_color, s=25)
 # ax.scatter([s.m_bv for s in spectras_computed], [s.m_ub for s in spectras_computed], label="Stars",marker="*", color=[spectral_colors[s.star_type[0]] for s in spectras_computed], s=6)
-ax.plot([bb.m_bv for bb in blackbodies], [bb.m_ub for bb in blackbodies], label="Blackbodies", color="black", linewidth=1)
-ax.set_xlabel("B-V")
-ax.set_ylabel("U-B")
+ax.plot([bb.m_bv for bb in blackbodies], [bb.m_ub for bb in blackbodies], label="Blackbodies", color="orange", linewidth=1)
+for T in [2000, 3000, 4000, 5000, 7500, 10000, 15000, 30000]:
+    closest_bb = min(blackbodies, key=lambda bb: abs(bb.T - T))
+    ax.annotate(f"{T}K", (closest_bb.m_bv, closest_bb.m_ub), textcoords="offset points", xytext=(5,10), ha='center', fontsize=11)
+    ax.scatter(closest_bb.m_bv, closest_bb.m_ub, color="orange", s=7, marker="o")  # Mark the blackbody points with a circle
+
+ax.set_xlabel("B-V", fontsize=20)
+ax.set_ylabel("U-B", fontsize=20)
+ax.grid(True, linestyle="--", alpha=0.5)
+ax.set_title("Color-Color Diagram (U-B vs B-V) of observed stars and blackbody model", fontsize=20)
 ax.invert_yaxis()
 
 
+empty_legend_line = plt.Line2D([0], [0], color='none', label='', markeredgecolor="none", markerfacecolor="none")  # Empty line for spacing in legend
+legend_text_line = lambda text: plt.Line2D([0], [0], color='none', label=text, markeredgecolor="none", markerfacecolor="none")  # Line for text in legend
+
 legend_elements = [
-    plt.Line2D([0], [0], marker='*', color='w', label=s_type, markerfacecolor=color, markersize=10) 
+    legend_text_line("Spectral Types"),
+] + [
+    plt.Line2D([0], [0], marker=color, color='none', label=s_type, markerfacecolor="black", markeredgecolor="none", markersize=10) 
     for s_type, color in spectral_colors.items()
 ] + [
-    plt.Line2D([0], [0], marker='o', color='w', label='Blackbodies', markerfacecolor='black', markersize=5)
+    plt.Line2D([0], [0], marker="*", color='none', label='Other', markerfacecolor="black", markeredgecolor="none", markersize=10),
+    empty_legend_line, 
+    legend_text_line("Star Types"),
+    plt.Line2D([0], [0], marker="*", color='none', label='Main Sequence star', markerfacecolor="Blue", markeredgecolor="none", markersize=10),
+    plt.Line2D([0], [0], marker="*", color='none', label='Giant star', markerfacecolor="Red", markeredgecolor="none", markersize=10),
+    plt.Line2D([0], [0], marker="*", color='none', label='Other star types', markerfacecolor="dimgray", markeredgecolor="none", markersize=10),
+    plt.Line2D([0], [0], marker='o', color='none', label='Blackbodies', markerfacecolor='Orange', markeredgecolor="none",markersize=5)
 ]
+
+fig.tight_layout()
 
 # TODO: maybe implement for blackbodies: cmap = plt.colormaps["coolwarm"], https://matplotlib.org/stable/gallery/text_labels_and_annotations/custom_legends.html
 
-fig.legend(handles=legend_elements, loc='upper right', title="Spectral Types")
+ax.legend(handles=legend_elements, loc='upper right', title="Legend", fontsize=13)
 ax.set_facecolor('lavenderblush')
+
+fig.savefig("set_1/Color-Color_Diagram.png", dpi=300)  # Save the figure with high resolution
 
 
 # Exercise 4
@@ -253,12 +281,22 @@ for type in specific_types:
 fig2, ax2 = plt.subplots(figsize=(10,6))
 
 for star in specific_stars:
-    ax2.plot(star.normalized_wavelengths, star.normalized_flux, label=f"{star.star_type} (normalized)", color=spectral_colors[star.star_type[0]], alpha=0.5)
+    ax2.plot(star.normalized_wavelengths, star.normalized_flux, label=f"{star.star_type}", alpha=0.5)
 
+ax2.axvspan(vega_bands["B"]['wavelength'][0], vega_bands["B"]['wavelength'][-1], color='blue', alpha=0.1, label='B-band range')
+ax2.axvspan(vega_bands["V"]['wavelength'][0], vega_bands["V"]['wavelength'][-1], color='green', alpha=0.1, label='V-band range')
+ax2.axvspan(vega_bands["U"]['wavelength'][0], vega_bands["U"]['wavelength'][-1], color='red', alpha=0.1, label='U-band range')
+ax2.set_title("Normalized Flux of Specific Stars Compared to Blackbody", fontsize=16)
 ax2.set_xlabel("Wavelength [Å]")
-ax2.set_ylabel("Normalized Flux [F_λ / F_λ,bb]")
+ax2.set_ylabel("Normalized Flux [$F_{λ\_*} / F_{λ\_bb}$]")
+ax2.grid(True, linestyle="--", alpha=0.5)
+ax2.set_facecolor('lavenderblush')
 
-plt.show() 
+ax2.legend()
+fig2.savefig("set_1/Normalized_Flux_Comparison.png", dpi=300)  # Save the figure with high resolution
+
+plt.show()
+
 
 
 
