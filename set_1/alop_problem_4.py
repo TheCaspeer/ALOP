@@ -26,6 +26,8 @@ class filter:
     def sigma_magnitude(self):
         self.sigma_m = 2.5 / (np.log(10) * self.snr)
 
+    
+
 
 
 B_band = filter("B", 30, 16.43)
@@ -75,9 +77,6 @@ V_band.magnitudes = V_band.mag_0point - 2.5 * np.log10(V_band.rates)
 
 BV_colors = B_band.magnitudes - V_band.magnitudes
 
-print("--- Overzicht van alle sterren ---")
-for i in range(len(B_band.fluxs)):
-    print(f"Ster {i+1}: Flux_B = {B_band.fluxs[i]:.1f}, Magnitude_B = {B_band.magnitudes[i]:.2f}, B-V = {BV_colors[i]:.3f}")
 
 # Opdracht 6
 
@@ -88,6 +87,11 @@ B_band.sigma_magnitude()
 V_band.sigma_magnitude()
 
 BV_sigma = np.sqrt(B_band.sigma_m**2 + V_band.sigma_m**2)
+
+print("--- Overzicht van alle sterren ---")
+for i in range(len(B_band.fluxs)):
+    print(f"Ster {i+1}: Flux_B = {B_band.fluxs[i]:.1f}, Magnitude_B = {B_band.magnitudes[i]:.2f} ± {B_band.sigma_m[i]:.3f}, B-V = {BV_colors[i]:.3f} ± {BV_sigma[i]:.3f} , S/N = {B_band.snr[i]:.2f}")
+    print(f"Ster {i+1}: Flux_V = {V_band.fluxs[i]:.1f}, Magnitude_V = {V_band.magnitudes[i]:.2f} ± {V_band.sigma_m[i]:.3f}, B-V = {BV_colors[i]:.3f} ± {BV_sigma[i]:.3f}, S/N = {V_band.snr[i]:.2f}")
 
 # Opdracht 7 
 for star in BV_colors:
